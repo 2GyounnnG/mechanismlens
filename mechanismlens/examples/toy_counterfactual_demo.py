@@ -1,19 +1,67 @@
-"""Small intervention-locality metric demo."""
+"""Runnable counterfactual audit demo.
+
+Run with:
+    python -m mechanismlens.examples.toy_counterfactual_demo
+"""
 
 from __future__ import annotations
 
-from mechanismlens import ObjectState, Trajectory
-from mechanismlens.metrics.causal import intervention_locality_score
+from mechanismlens import AuditInput, AuditSuite, ObjectState, Trajectory
+
+
+def build_base_rollout() -> Trajectory:
+    """Construct a base prediction with three objects."""
+
+    return Trajectory(
+        states=[
+            [
+                ObjectState("A", label="rigid", position=[0.0, 0.0], velocity=[1.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("B", label="rigid", position=[2.0, 0.0], velocity=[0.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("D", label="static obstacle", position=[10.0, 0.0], velocity=[0.0, 0.0], mass=5.0, radius=0.5),
+            ],
+            [
+                ObjectState("A", label="rigid", position=[1.0, 0.0], velocity=[1.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("B", label="rigid", position=[2.0, 0.0], velocity=[0.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("D", label="static obstacle", position=[10.0, 0.0], velocity=[0.0, 0.0], mass=5.0, radius=0.5),
+            ],
+        ],
+        metadata={"name": "base"},
+    )
+
+
+def build_intervened_rollout() -> Trajectory:
+    """Construct an intervened prediction with one intended and one unintended effect."""
+
+    return Trajectory(
+        states=[
+            [
+                ObjectState("A", label="rigid", position=[0.4, 0.0], velocity=[1.2, 0.0], mass=1.0, radius=0.2),
+                ObjectState("B", label="rigid", position=[2.0, 0.0], velocity=[0.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("D", label="static obstacle", position=[10.0, 0.0], velocity=[0.0, 0.0], mass=5.0, radius=0.5),
+            ],
+            [
+                ObjectState("A", label="rigid", position=[1.6, 0.0], velocity=[1.2, 0.0], mass=1.0, radius=0.2),
+                ObjectState("B", label="rigid", position=[2.0, 0.0], velocity=[0.0, 0.0], mass=1.0, radius=0.2),
+                ObjectState("D", label="static obstacle", position=[10.7, 0.0], velocity=[0.0, 0.0], mass=5.0, radius=0.5),
+            ],
+        ],
+        metadata={"name": "intervened"},
+    )
 
 
 def main() -> None:
-    base = Trajectory(
-        states=[[ObjectState("a", position=[0.0, 0.0]), ObjectState("b", position=[1.0, 0.0])]]
+    base = build_base_rollout()
+    intervened = build_intervened_rollout()
+    audit_input = AuditInput(
+        predicted=intervened,
+        predicted_base=base,
+        predicted_intervened=intervened,
+        expected_affected_object_ids=["A"],
+        intervention_description="Apply a rightward impulse to object A.",
     )
-    intervened = Trajectory(
-        states=[[ObjectState("a", position=[0.5, 0.0]), ObjectState("b", position=[1.05, 0.0])]]
-    )
-    print(intervention_locality_score(base, intervened, {"a"}))
+    report = AuditSuite(bounds=[(-1.0, 12.0), (-1.0, 1.0)]).run(audit_input)
+    print(report.to_markdown())
+    report.save_markdown("counterfactual_audit_report.md")
 
 
 if __name__ == "__main__":

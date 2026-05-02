@@ -1,4 +1,4 @@
-"""Serializable audit schema for MechanismLens v0.1."""
+"""Serializable audit schema for MechanismLens."""
 
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ class Trajectory:
 
 @dataclass
 class AuditInput:
-    """Inputs consumed by the v0.1 audit pipeline."""
+    """Inputs consumed by the audit pipeline."""
 
     predicted: Trajectory
     ground_truth: Trajectory | None = None
@@ -123,6 +123,10 @@ class AuditInput:
     semantic_graph: dict[str, Any] | None = None
     causal_graph: dict[str, Any] | None = None
     domain_contract: dict[str, Any] | None = None
+    predicted_base: Trajectory | None = None
+    predicted_intervened: Trajectory | None = None
+    expected_affected_object_ids: list[str] | None = None
+    intervention_description: str | None = None
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -133,6 +137,14 @@ class AuditInput:
             "semantic_graph": self.semantic_graph,
             "causal_graph": self.causal_graph,
             "domain_contract": self.domain_contract,
+            "predicted_base": None
+            if self.predicted_base is None
+            else self.predicted_base.to_json_dict(),
+            "predicted_intervened": None
+            if self.predicted_intervened is None
+            else self.predicted_intervened.to_json_dict(),
+            "expected_affected_object_ids": self.expected_affected_object_ids,
+            "intervention_description": self.intervention_description,
         }
 
 
@@ -158,7 +170,7 @@ class Finding:
 
 @dataclass
 class AuditReport:
-    """Final v0.1 audit report."""
+    """Final audit report."""
 
     overall_risk: Risk
     findings: list[Finding]

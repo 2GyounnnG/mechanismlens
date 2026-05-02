@@ -1,9 +1,10 @@
-"""MechanismLens v0.1 audit pipeline."""
+"""MechanismLens audit pipeline."""
 
 from __future__ import annotations
 
 from typing import Any, Sequence
 
+from .metrics.causal import intervention_locality_score, unexpected_side_effect_findings
 from .metrics.cross_layer import semantic_physics_mismatch
 from .metrics.horizon import horizon_amplification, mean_position_error
 from .metrics.physics import boundary_violation, momentum_drift, penetration_violation
@@ -19,7 +20,7 @@ def _overall_risk(findings: list[Finding]) -> Risk:
 
 
 class AuditSuite:
-    """Run the v0.1 audit checks over an :class:`AuditInput`."""
+    """Run rollout and counterfactual checks over an :class:`AuditInput`."""
 
     def __init__(
         self,
@@ -28,7 +29,7 @@ class AuditSuite:
         self.bounds = bounds
 
     def run(self, audit_input: AuditInput) -> AuditReport:
-        """Run horizon, physics, and cross-layer checks."""
+        """Run horizon, physics, cross-layer, and optional counterfactual checks."""
 
         findings: list[Finding] = []
         metrics: dict[str, Any] = {}
@@ -51,6 +52,23 @@ class AuditSuite:
         findings.extend(penetration_findings)
         findings.extend(momentum_findings)
         findings.extend(cross_layer_findings)
+
+        if audit_input.predicted_base is not None and audit_input.predicted_intervened is not None:
+            expected = audit_input.expected_affected_object_ids or []
+            metrics["counterfactual_locality"] = intervention_locality_score(
+                audit_input.predicted_base,
+                audit_input.predicted_intervened,
+                expected,
+            )
+            causal_findings = unexpected_side_effect_findings(
+                audit_input.predicted_base,
+                audit_input.predicted_intervened,
+                expected,
+            )
+            if audit_input.intervention_description:
+                for finding in causal_findings:
+                    finding.details["intervention_description"] = audit_input.intervention_description
+            findings.extend(causal_findings)
 
         return AuditReport(
             overall_risk=_overall_risk(findings),

@@ -29,6 +29,17 @@ The demo constructs a ground-truth two-object rollout and a predicted rollout wi
 penetration, a moving object labeled `static`, and momentum drift. It prints a Markdown audit
 report and saves `audit_report.md`.
 
+## Counterfactual Quickstart
+
+```bash
+python -m mechanismlens.examples.toy_counterfactual_demo
+```
+
+The counterfactual demo compares a base predicted rollout against an intervened predicted
+rollout. Object `A` is expected to change, while distant object `D` changes unexpectedly. The
+audit reports locality metrics and causal side-effect findings, then saves
+`counterfactual_audit_report.md`.
+
 ## Minimal API
 
 ```python

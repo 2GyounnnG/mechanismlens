@@ -11,7 +11,9 @@
 
 ## v0.2
 
-- Richer intervention and causal graph auditing.
+- Implemented counterfactual audit support for base/intervened predicted rollouts.
+- Implemented per-object deviation, intervention locality metrics, and unexpected side-effect findings.
+- In progress: richer causal graph auditing.
 - More explicit domain-contract registry.
 - Decision-risk metrics for planning traces.
 

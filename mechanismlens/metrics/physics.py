@@ -77,7 +77,7 @@ def penetration_violation(trajectory: Trajectory) -> tuple[float, list[Finding]]
                     continue
                 distance = vector_distance(left.position, right.position)
                 penetration = left.radius + right.radius - distance
-                if penetration > 0.0:
+                if penetration > 1e-9:
                     max_penetration = max(max_penetration, penetration)
                     findings.append(
                         Finding(
