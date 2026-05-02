@@ -6,7 +6,11 @@ Run with:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from mechanismlens import AuditInput, AuditSuite, ObjectState, Trajectory
+
+REPORT_PATH = Path("examples/reports/counterfactual_audit_report.md")
 
 
 def build_base_rollout() -> Trajectory:
@@ -61,7 +65,8 @@ def main() -> None:
     )
     report = AuditSuite(bounds=[(-1.0, 12.0), (-1.0, 1.0)]).run(audit_input)
     print(report.to_markdown())
-    report.save_markdown("counterfactual_audit_report.md")
+    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    report.save_markdown(REPORT_PATH)
 
 
 if __name__ == "__main__":

@@ -14,10 +14,15 @@
 - Implemented counterfactual audit support for base/intervened predicted rollouts.
 - Implemented per-object deviation, intervention locality metrics, and unexpected side-effect findings.
 - In progress: richer causal graph auditing.
-- More explicit domain-contract registry.
-- Decision-risk metrics for planning traces.
 
 ## v0.3
+
+- Implemented contract plugin cleanup through the `DomainContract` interface.
+- Implemented `ToyRigidBodyContract` and `GenericTrajectoryContract`.
+- In progress: richer domain-contract registry.
+- Decision-risk metrics for planning traces.
+
+## Later
 
 - Optional visualization utilities.
 - CLI entry point for CI and batch audits.

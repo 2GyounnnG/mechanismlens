@@ -9,3 +9,4 @@ build/
 *.egg-info/
 audit_report.md
 counterfactual_audit_report.md
+examples/reports/*.md

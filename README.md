@@ -27,7 +27,7 @@ python -m mechanismlens.examples.toy_rollout_demo
 
 The demo constructs a ground-truth two-object rollout and a predicted rollout with object
 penetration, a moving object labeled `static`, and momentum drift. It prints a Markdown audit
-report and saves `audit_report.md`.
+report and saves `examples/reports/audit_report.md`.
 
 ## Counterfactual Quickstart
 
@@ -38,7 +38,7 @@ python -m mechanismlens.examples.toy_counterfactual_demo
 The counterfactual demo compares a base predicted rollout against an intervened predicted
 rollout. Object `A` is expected to change, while distant object `D` changes unexpectedly. The
 audit reports locality metrics and causal side-effect findings, then saves
-`counterfactual_audit_report.md`.
+`examples/reports/counterfactual_audit_report.md`.
 
 ## Minimal API
 
@@ -52,6 +52,23 @@ predicted = Trajectory(states=[
 report = AuditSuite(bounds=[(-1.0, 1.0), (-1.0, 1.0)]).run(AuditInput(predicted=predicted))
 print(report.to_markdown())
 ```
+
+## DomainContract Plugins
+
+`AuditSuite` delegates domain-specific checks to a `DomainContract`. By default it uses
+`ToyRigidBodyContract(bounds=...)`, which runs boundary, penetration, momentum, and
+semantic/physics consistency checks. You can pass a different contract for another domain:
+
+```python
+from mechanismlens import AuditSuite
+from mechanismlens.contracts import GenericTrajectoryContract
+
+suite = AuditSuite(contract=GenericTrajectoryContract())
+```
+
+A contract implements `check_trajectory(...)` and can optionally implement
+`check_counterfactual(...)`. This keeps MechanismLens framework-general while letting each
+domain define the checks that actually make sense.
 
 ## Initial Failure Taxonomy
 
