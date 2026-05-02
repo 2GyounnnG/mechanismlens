@@ -43,3 +43,23 @@ to MechanismLens' built-in locality score and unexpected side-effect findings.
 
 Severity is medium when an unexpected object changes more than the side-effect threshold and
 high when its mean deviation is greater than `0.5`.
+
+## v0.4 Reporting Format
+
+Reports are deterministic and can be rendered as Markdown or JSON. The Markdown format contains:
+
+1. Title and overall risk.
+2. Summary table by finding category and severity.
+3. Metrics, serialized in stable key order where possible.
+4. Findings grouped by category.
+5. Recommendations generated from transparent rules when findings exist.
+
+JSON reports include `overall_risk`, `summary.category_counts`,
+`summary.severity_counts`, `findings`, and `metrics`.
+
+Use:
+
+```python
+report.save_markdown("examples/reports/audit.md")
+report.save_json("examples/reports/audit.json")
+```

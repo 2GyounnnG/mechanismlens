@@ -10,7 +10,8 @@ from pathlib import Path
 
 from mechanismlens import AuditInput, AuditSuite, ObjectState, Trajectory
 
-REPORT_PATH = Path("examples/reports/counterfactual_audit_report.md")
+REPORT_MARKDOWN_PATH = Path("examples/reports/toy_counterfactual_audit.md")
+REPORT_JSON_PATH = Path("examples/reports/toy_counterfactual_audit.json")
 
 
 def build_base_rollout() -> Trajectory:
@@ -65,8 +66,9 @@ def main() -> None:
     )
     report = AuditSuite(bounds=[(-1.0, 12.0), (-1.0, 1.0)]).run(audit_input)
     print(report.to_markdown())
-    REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    report.save_markdown(REPORT_PATH)
+    REPORT_MARKDOWN_PATH.parent.mkdir(parents=True, exist_ok=True)
+    report.save_markdown(REPORT_MARKDOWN_PATH)
+    report.save_json(REPORT_JSON_PATH)
 
 
 if __name__ == "__main__":

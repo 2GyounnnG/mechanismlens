@@ -10,6 +10,15 @@ from typing import Any, Literal, Sequence
 Severity = Literal["low", "medium", "high"]
 Category = Literal["semantic", "causal", "physics", "cross_layer", "decision", "horizon"]
 Risk = Literal["low", "medium", "high"]
+CATEGORY_ORDER: tuple[Category, ...] = (
+    "semantic",
+    "causal",
+    "physics",
+    "cross_layer",
+    "decision",
+    "horizon",
+)
+SEVERITY_ORDER: tuple[Severity, ...] = ("low", "medium", "high")
 
 
 def as_vector(value: Sequence[float] | Any | None) -> list[float]:
@@ -177,14 +186,92 @@ class AuditReport:
     metrics: dict[str, Any] = field(default_factory=dict)
 
     def to_json_dict(self) -> dict[str, Any]:
+        """Return a deterministic JSON-friendly report dictionary."""
+
         return {
             "overall_risk": self.overall_risk,
+            "summary": {
+                "category_counts": self.category_counts(),
+                "severity_counts": self.severity_counts(),
+            },
             "findings": [finding.to_json_dict() for finding in self.findings],
             "metrics": self.metrics,
         }
 
+    def to_json(self, path: str | Path | None = None) -> str:
+        """Return the report as JSON and optionally write it to a path."""
+
+        payload = json.dumps(self.to_json_dict(), indent=2, sort_keys=True)
+        if path is not None:
+            self.save_json(path)
+        return payload
+
+    def save_json(self, path: str | Path) -> None:
+        """Save the report as deterministic JSON."""
+
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(self.to_json() + "\n", encoding="utf-8")
+
+    def category_counts(self) -> dict[str, int]:
+        """Count findings by category in a stable order."""
+
+        counts = {category: 0 for category in CATEGORY_ORDER}
+        for finding in self.findings:
+            counts[finding.category] = counts.get(finding.category, 0) + 1
+        return {category: count for category, count in counts.items() if count > 0}
+
+    def severity_counts(self) -> dict[str, int]:
+        """Count findings by severity in a stable order."""
+
+        counts = {severity: 0 for severity in SEVERITY_ORDER}
+        for finding in self.findings:
+            counts[finding.severity] = counts.get(finding.severity, 0) + 1
+        return {severity: count for severity, count in counts.items() if count > 0}
+
+    def risk_summary_table_markdown(self) -> str:
+        """Render a compact category/severity summary table."""
+
+        category_counts = self.category_counts()
+        severity_counts = self.severity_counts()
+        lines = [
+            "| Type | Low | Medium | High | Total |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+        for category in CATEGORY_ORDER:
+            category_findings = [finding for finding in self.findings if finding.category == category]
+            if not category_findings:
+                continue
+            low = sum(1 for finding in category_findings if finding.severity == "low")
+            medium = sum(1 for finding in category_findings if finding.severity == "medium")
+            high = sum(1 for finding in category_findings if finding.severity == "high")
+            lines.append(f"| {category} | {low} | {medium} | {high} | {category_counts[category]} |")
+        if not category_counts:
+            lines.append("| none | 0 | 0 | 0 | 0 |")
+        lines.append(
+            "| **Total** | "
+            f"{severity_counts.get('low', 0)} | "
+            f"{severity_counts.get('medium', 0)} | "
+            f"{severity_counts.get('high', 0)} | "
+            f"{len(self.findings)} |"
+        )
+        return "\n".join(lines)
+
     def to_markdown(self) -> str:
-        lines = ["# MechanismLens Audit Report", "", f"Overall risk: **{self.overall_risk}**", ""]
+        """Render a deterministic Markdown audit report."""
+
+        from mechanismlens.recommendations import generate_recommendations
+
+        lines = [
+            "# MechanismLens Audit Report",
+            "",
+            f"Overall risk: **{self.overall_risk}**",
+            "",
+            "## Summary",
+            "",
+            self.risk_summary_table_markdown(),
+            "",
+        ]
         if self.metrics:
             lines.extend(["## Metrics", ""])
             for name, value in self.metrics.items():
@@ -194,12 +281,27 @@ class AuditReport:
         if not self.findings:
             lines.append("No findings.")
         else:
-            for finding in self.findings:
-                when = "" if finding.time_index is None else f" at t={finding.time_index}"
-                lines.append(
-                    f"- **{finding.severity}** `{finding.category}`{when}: {finding.message}"
-                )
+            for category in CATEGORY_ORDER:
+                category_findings = [
+                    finding for finding in self.findings if finding.category == category
+                ]
+                if not category_findings:
+                    continue
+                lines.extend([f"### {category}", ""])
+                for finding in category_findings:
+                    when = "" if finding.time_index is None else f" at t={finding.time_index}"
+                    lines.append(f"- **{finding.severity}**{when}: {finding.message}")
+                lines.append("")
+            recommendations = generate_recommendations(self)
+            if recommendations:
+                lines.extend(["## Recommendations", ""])
+                for recommendation in recommendations:
+                    lines.append(f"- {recommendation}")
         return "\n".join(lines).rstrip() + "\n"
 
     def save_markdown(self, path: str | Path) -> None:
-        Path(path).write_text(self.to_markdown(), encoding="utf-8")
+        """Save the report as Markdown, creating parent directories as needed."""
+
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(self.to_markdown(), encoding="utf-8")

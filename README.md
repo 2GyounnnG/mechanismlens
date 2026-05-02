@@ -27,7 +27,8 @@ python -m mechanismlens.examples.toy_rollout_demo
 
 The demo constructs a ground-truth two-object rollout and a predicted rollout with object
 penetration, a moving object labeled `static`, and momentum drift. It prints a Markdown audit
-report and saves `examples/reports/audit_report.md`.
+report and saves `examples/reports/toy_rollout_audit.md` and
+`examples/reports/toy_rollout_audit.json`.
 
 ## Counterfactual Quickstart
 
@@ -38,7 +39,8 @@ python -m mechanismlens.examples.toy_counterfactual_demo
 The counterfactual demo compares a base predicted rollout against an intervened predicted
 rollout. Object `A` is expected to change, while distant object `D` changes unexpectedly. The
 audit reports locality metrics and causal side-effect findings, then saves
-`examples/reports/counterfactual_audit_report.md`.
+`examples/reports/toy_counterfactual_audit.md` and
+`examples/reports/toy_counterfactual_audit.json`.
 
 ## Minimal API
 
@@ -69,6 +71,28 @@ suite = AuditSuite(contract=GenericTrajectoryContract())
 A contract implements `check_trajectory(...)` and can optionally implement
 `check_counterfactual(...)`. This keeps MechanismLens framework-general while letting each
 domain define the checks that actually make sense.
+
+## Reports
+
+Markdown reports include the overall risk, a summary table, metrics, findings grouped by
+category, and rule-based recommendations when findings exist. The summary table counts findings
+by category and severity (`low`, `medium`, `high`), with the total row showing the whole report.
+
+Current finding categories are:
+
+- `semantic`
+- `causal`
+- `physics`
+- `cross_layer`
+- `decision`
+- `horizon`
+
+Reports can be saved as Markdown and JSON:
+
+```python
+report.save_markdown("examples/reports/audit.md")
+report.save_json("examples/reports/audit.json")
+```
 
 ## Initial Failure Taxonomy
 

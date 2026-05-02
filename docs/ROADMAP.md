@@ -22,6 +22,12 @@
 - In progress: richer domain-contract registry.
 - Decision-risk metrics for planning traces.
 
+## v0.4
+
+- Implemented polished Markdown/JSON reports with category and severity summaries.
+- Implemented rule-based recommendations for physics, causal, cross-layer, and horizon risks.
+- Standardized demo report outputs under `examples/reports/`.
+
 ## Later
 
 - Optional visualization utilities.
