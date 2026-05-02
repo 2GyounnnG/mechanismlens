@@ -5,7 +5,7 @@ from .benchmark import BenchmarkCase, BenchmarkResult, BenchmarkRunner
 from .contracts import DomainContract, GenericTrajectoryContract, ToyRigidBodyContract
 from .schema import AuditInput, AuditReport, Finding, ObjectState, Trajectory
 
-__version__ = "0.9.0"
+__version__ = "1.0.0"
 
 __all__ = [
     "AuditInput",

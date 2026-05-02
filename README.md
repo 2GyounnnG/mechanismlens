@@ -109,6 +109,16 @@ failure categories, whether low prediction error can still hide mechanism risk, 
 mechanism risk predicts downstream failure better than simple prediction error in the synthetic
 setting.
 
+Run the learned 2D world-model experiment:
+
+```bash
+python -m experiments.worldmodel2d.run_experiment --n-train 2000 --n-rollouts 20 --horizon 16
+```
+
+This trains a NumPy linear dynamics predictor, optionally trains a small PyTorch MLP when torch
+is installed, rolls each model out in ID, boundary, collision, and planner regimes, then audits
+the learned predicted trajectories. Outputs are written under `experiments/worldmodel2d/results/`.
+
 ## Example Report Snippet
 
 ```markdown

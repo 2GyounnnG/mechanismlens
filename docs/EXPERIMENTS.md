@@ -74,3 +74,34 @@ completes.
 These cases are synthetic and intentionally small. They are not external benchmarks and do not
 prove real-world safety. The purpose is to test whether MechanismLens metrics behave sensibly
 when mechanism-mismatch failures are injected under controlled conditions.
+
+## Learned 2D World-Model Experiment
+
+The synthetic injected cases are useful for checking whether audit metrics respond to known
+failures, but they are still hand-constructed. The learned 2D experiment adds a minimal actual
+world-model loop:
+
+1. Generate transition data from a deterministic 2D environment.
+2. Train lightweight dynamics predictors.
+3. Roll the learned predictors forward across ID, boundary, collision, and planner regimes.
+4. Compare conventional rollout MSE against MechanismLens audit risk.
+5. In the planner regime, compare audit risk with imagined-real return gap.
+
+Run:
+
+```bash
+python -m experiments.worldmodel2d.run_experiment --n-train 2000 --n-rollouts 20 --horizon 16
+```
+
+The NumPy linear baseline always runs. If PyTorch is installed, the experiment also trains a
+small optional MLP. If PyTorch is missing, the experiment skips the MLP and still completes.
+
+Outputs are written to `experiments/worldmodel2d/results/`:
+
+- `worldmodel2d_records.csv`: one row per model/regime/rollout with MSE, audit risk, finding counts, and return gap when available.
+- `worldmodel2d_summary.json`: aggregate mean MSE, mean audit risk, and correlations.
+- `worldmodel2d_summary.md`: readable summary table.
+
+This is still a small local experiment, not a real benchmark suite. Its purpose is to test the
+core research question in a learned setting: when a dynamics model has low or moderate rollout
+error, do mechanism-risk findings expose failures that MSE alone does not capture?

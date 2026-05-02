@@ -14,3 +14,4 @@ examples/reports/*.json
 examples/reports/*.csv
 experiments/results/
 experiments/figures/
+experiments/worldmodel2d/results/
