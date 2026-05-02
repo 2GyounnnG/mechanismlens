@@ -12,10 +12,11 @@
   findings, recommendations, and standardized example report paths.
 - **v0.5 docs/research framing**: polished README, paper-style framing, API docs, examples,
   development guide, and clearer project roadmap.
+- **v0.6 benchmark suite**: deterministic toy benchmark cases plus aggregate JSON/CSV outputs
+  for batch auditing.
 
 ## Next
 
-- Benchmark suite for synthetic semantic, causal, physical, and cross-layer failures.
 - Richer contract plugins for non-rigid-body domains.
 - Decision-risk audit for planner traces.
 - Paper experiments that compare accuracy-only evaluation with cross-layer diagnostics.

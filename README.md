@@ -49,6 +49,19 @@ python -m mechanismlens.examples.toy_counterfactual_demo
 
 The demos print Markdown reports and save Markdown/JSON files under `examples/reports/`.
 
+## Benchmark Mode
+
+Run the deterministic toy benchmark suite:
+
+```bash
+python -m mechanismlens.examples.run_toy_benchmark
+```
+
+This runs several predefined audit cases and writes aggregate outputs to:
+
+- `examples/reports/toy_benchmark_summary.json`
+- `examples/reports/toy_benchmark_summary.csv`
+
 ## Example Report Snippet
 
 ```markdown
@@ -113,4 +126,5 @@ report.save_json("examples/reports/audit.json")
 - v0.3: `DomainContract` plugin cleanup.
 - v0.4: polished Markdown/JSON reports and recommendations.
 - v0.5: documentation and research framing cleanup.
-- Next: benchmark suite, richer contract plugins, decision-risk audit, and paper experiments.
+- v0.6: deterministic toy benchmark suite for batch auditing.
+- Next: richer contract plugins, decision-risk audit, larger benchmark cases, and paper experiments.

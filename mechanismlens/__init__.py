@@ -1,6 +1,7 @@
 """MechanismLens: lightweight audits for mechanism-alignment failures."""
 
 from .audit_suite import AuditSuite
+from .benchmark import BenchmarkCase, BenchmarkResult, BenchmarkRunner
 from .contracts import DomainContract, GenericTrajectoryContract, ToyRigidBodyContract
 from .schema import AuditInput, AuditReport, Finding, ObjectState, Trajectory
 
@@ -10,6 +11,9 @@ __all__ = [
     "AuditInput",
     "AuditReport",
     "AuditSuite",
+    "BenchmarkCase",
+    "BenchmarkResult",
+    "BenchmarkRunner",
     "DomainContract",
     "Finding",
     "GenericTrajectoryContract",

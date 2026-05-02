@@ -55,3 +55,28 @@ Outputs:
 
 - `examples/reports/toy_counterfactual_audit.md`
 - `examples/reports/toy_counterfactual_audit.json`
+
+## Toy Benchmark Suite
+
+Run:
+
+```bash
+python -m mechanismlens.examples.run_toy_benchmark
+```
+
+The benchmark suite runs multiple deterministic toy cases:
+
+- `clean_rollout`
+- `penetration_failure`
+- `static_object_mismatch`
+- `counterfactual_side_effect`
+- `combined_failure`
+
+It prints a compact table and writes aggregate outputs:
+
+- `examples/reports/toy_benchmark_summary.json`
+- `examples/reports/toy_benchmark_summary.csv`
+
+The JSON file preserves metrics and count dictionaries for each case. The CSV file is intended
+for quick comparison across cases and includes risk, finding count, severity counts, and category
+counts.
