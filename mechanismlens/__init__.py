@@ -4,7 +4,7 @@ from .audit_suite import AuditSuite
 from .contracts import DomainContract, GenericTrajectoryContract, ToyRigidBodyContract
 from .schema import AuditInput, AuditReport, Finding, ObjectState, Trajectory
 
-__version__ = "0.1.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "AuditInput",

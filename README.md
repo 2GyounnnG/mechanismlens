@@ -1,48 +1,83 @@
-# MechanismLens
+# MechanismLens: Cross-Layer Diagnostics for Semantic-Causal-Physical World Models
 
-MechanismLens is a modular audit toolkit for diagnosing mechanism-alignment failures in
-world-model rollouts. It does **not** train world models. It audits predicted trajectories,
-counterfactual trajectories, and planning traces for simple signs of mechanism mismatch.
+MechanismLens is a lightweight audit toolkit for inspecting predicted rollouts,
+counterfactual trajectories, and planning traces from world models. It does not train models.
+It helps researchers diagnose when a model's imagined future is locally plausible but wrong
+because semantic grounding, causal effects, physical feasibility, or planner behavior no
+longer agree.
 
-## What It Audits
+## What Problem It Solves
 
-- Semantic grounding: wrong object, entity, or task labels.
-- Causal validity: intervention effects appearing on the wrong objects.
-- Physics feasibility: impossible dynamics, penetration, boundary violations, or drift.
-- Cross-layer consistency: semantic labels contradict physical behavior.
-- Decision risk: planner traces that may exploit model errors or uncertainty.
+World-model evaluation often emphasizes prediction error, task return, or isolated benchmark
+scores. Those signals can miss cross-layer failures: an object label may be wrong even when the
+motion looks plausible, an intervention may affect the wrong object, or a physically valid
+rollout may be grounded on the wrong semantic entity. MechanismLens turns those assumptions
+into explicit contracts and produces readable reports about where they fail.
 
-## What It Does Not Do
+## Core Diagnosis Categories
 
-- It does not train neural networks.
-- It does not require external datasets.
-- It does not depend on PyTorch.
-- It does not claim to prove full model correctness.
+- **Semantic grounding**: object, entity, role, or task labels do not match the intended world.
+- **Causal validity**: interventions have implausible effects, wrong locality, or wrong direction.
+- **Physics feasibility**: rollouts violate boundaries, penetration constraints, momentum checks, or domain support.
+- **Cross-layer mechanism mismatch**: semantic labels, causal behavior, and physical feasibility contradict each other.
+- **Decision/planner risk**: planner traces may exploit model errors, uncertainty, or invalid predicted states.
+
+## Installation
+
+From the repository root:
+
+```bash
+python -m pip install -e ".[dev]"
+```
+
+This project intentionally avoids deep-learning dependencies. The development extra installs
+`pytest`; the core package is lightweight.
 
 ## Quickstart
+
+Run the rollout audit demo:
 
 ```bash
 python -m mechanismlens.examples.toy_rollout_demo
 ```
 
-The demo constructs a ground-truth two-object rollout and a predicted rollout with object
-penetration, a moving object labeled `static`, and momentum drift. It prints a Markdown audit
-report and saves `examples/reports/toy_rollout_audit.md` and
-`examples/reports/toy_rollout_audit.json`.
-
-## Counterfactual Quickstart
+Run the counterfactual audit demo:
 
 ```bash
 python -m mechanismlens.examples.toy_counterfactual_demo
 ```
 
-The counterfactual demo compares a base predicted rollout against an intervened predicted
-rollout. Object `A` is expected to change, while distant object `D` changes unexpectedly. The
-audit reports locality metrics and causal side-effect findings, then saves
-`examples/reports/toy_counterfactual_audit.md` and
-`examples/reports/toy_counterfactual_audit.json`.
+The demos print Markdown reports and save Markdown/JSON files under `examples/reports/`.
 
-## Minimal API
+## Example Report Snippet
+
+```markdown
+# MechanismLens Audit Report
+
+Overall risk: **high**
+
+## Summary
+
+| Type | Low | Medium | High | Total |
+| --- | ---: | ---: | ---: | ---: |
+| physics | 0 | 1 | 2 | 3 |
+| cross_layer | 0 | 2 | 0 | 2 |
+| **Total** | 0 | 3 | 2 | 5 |
+```
+
+## API Overview
+
+`AuditInput` packages predicted, observed, ground-truth, and counterfactual trajectories for an
+audit run.
+
+`AuditSuite` orchestrates horizon metrics, domain-contract checks, counterfactual locality
+metrics, and report generation.
+
+`DomainContract` is the plugin interface for domain-specific checks. The default
+`ToyRigidBodyContract` runs boundary, penetration, momentum, and semantic/physics consistency
+checks.
+
+`AuditReport` stores findings and metrics, then renders deterministic Markdown or JSON:
 
 ```python
 from mechanismlens import AuditInput, AuditSuite, ObjectState, Trajectory
@@ -52,52 +87,30 @@ predicted = Trajectory(states=[
 ])
 
 report = AuditSuite(bounds=[(-1.0, 1.0), (-1.0, 1.0)]).run(AuditInput(predicted=predicted))
-print(report.to_markdown())
-```
-
-## DomainContract Plugins
-
-`AuditSuite` delegates domain-specific checks to a `DomainContract`. By default it uses
-`ToyRigidBodyContract(bounds=...)`, which runs boundary, penetration, momentum, and
-semantic/physics consistency checks. You can pass a different contract for another domain:
-
-```python
-from mechanismlens import AuditSuite
-from mechanismlens.contracts import GenericTrajectoryContract
-
-suite = AuditSuite(contract=GenericTrajectoryContract())
-```
-
-A contract implements `check_trajectory(...)` and can optionally implement
-`check_counterfactual(...)`. This keeps MechanismLens framework-general while letting each
-domain define the checks that actually make sense.
-
-## Reports
-
-Markdown reports include the overall risk, a summary table, metrics, findings grouped by
-category, and rule-based recommendations when findings exist. The summary table counts findings
-by category and severity (`low`, `medium`, `high`), with the total row showing the whole report.
-
-Current finding categories are:
-
-- `semantic`
-- `causal`
-- `physics`
-- `cross_layer`
-- `decision`
-- `horizon`
-
-Reports can be saved as Markdown and JSON:
-
-```python
 report.save_markdown("examples/reports/audit.md")
 report.save_json("examples/reports/audit.json")
 ```
 
-## Initial Failure Taxonomy
+## What MechanismLens Is NOT
 
-- Semantic grounding failure: labels or entities do not match the modeled world.
-- Causal validity failure: interventions have implausible effects or wrong directionality.
-- Physics feasibility failure: rollouts violate simple physical constraints.
-- Cross-layer mechanism mismatch: semantic, causal, and physical layers contradict one another.
-- Decision/planner exploitation risk: a planner chooses actions that exploit known model errors.
+- It is not a world model trainer.
+- It is not a universal safety proof.
+- It is not a replacement for domain-specific validation or simulation review.
+- It is not tied to a particular neural network framework.
+
+## Current Limitations
+
+- The included checks are intentionally small and rule-based.
+- The rigid-body contract is a toy reference contract, not a full physics engine.
+- Decision/planner risk is represented in the taxonomy but not yet deeply implemented.
+- Counterfactual support currently uses object-level position deviation and locality heuristics.
+- Reports explain detected contract violations; they do not establish model correctness.
+
+## Roadmap
+
+- v0.1: rollout, physics, horizon, and cross-layer audit basics.
+- v0.2: counterfactual locality and unexpected side-effect audit.
+- v0.3: `DomainContract` plugin cleanup.
+- v0.4: polished Markdown/JSON reports and recommendations.
+- v0.5: documentation and research framing cleanup.
+- Next: benchmark suite, richer contract plugins, decision-risk audit, and paper experiments.

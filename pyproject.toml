@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mechanismlens"
-version = "0.1.0"
-description = "A tiny audit toolkit for inspecting mechanism-level behavior in trajectory models."
+version = "0.5.0"
+description = "Cross-layer diagnostics for semantic-causal-physical world model rollouts."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
