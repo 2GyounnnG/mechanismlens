@@ -12,3 +12,4 @@ counterfactual_audit_report.md
 examples/reports/*.md
 examples/reports/*.json
 examples/reports/*.csv
+experiments/results/

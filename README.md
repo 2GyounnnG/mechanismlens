@@ -33,6 +33,12 @@ python -m pip install -e ".[dev]"
 This project intentionally avoids deep-learning dependencies. The development extra installs
 `pytest`; the core package is lightweight.
 
+For CLI-only use, an editable install without development extras is enough:
+
+```bash
+python -m pip install -e .
+```
+
 ## Quickstart
 
 Run the rollout audit demo:
@@ -55,6 +61,18 @@ python -m mechanismlens.examples.toy_decision_risk_demo
 
 The demos print Markdown reports and save Markdown/JSON files under `examples/reports/`.
 
+## CLI Usage
+
+After installation, the `mechanismlens` command exposes the same demos and benchmark:
+
+```bash
+mechanismlens demo rollout
+mechanismlens demo counterfactual
+mechanismlens demo decision
+mechanismlens benchmark toy
+mechanismlens version
+```
+
 ## Benchmark Mode
 
 Run the deterministic toy benchmark suite:
@@ -67,6 +85,25 @@ This runs several predefined audit cases and writes aggregate outputs to:
 
 - `examples/reports/toy_benchmark_summary.json`
 - `examples/reports/toy_benchmark_summary.csv`
+
+## Experimental Analysis
+
+Run controlled synthetic mechanism-mismatch experiments:
+
+```bash
+python -m mechanismlens.experiments.run_synthetic_experiment --n-per-type 20
+```
+
+The experiment injects clean, physics, cross-layer, causal, decision, and combined failures,
+then writes:
+
+- `experiments/results/synthetic_audit_records.json`
+- `experiments/results/synthetic_audit_records.csv`
+- `experiments/results/synthetic_summary.json`
+
+These outputs are intended for research analysis: whether audit scores recover injected
+failure categories and whether mechanism risk predicts downstream failure better than simple
+prediction error in the synthetic setting.
 
 ## Example Report Snippet
 

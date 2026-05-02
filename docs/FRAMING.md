@@ -27,3 +27,25 @@ misgrounded.
 MechanismLens is positioned as a contract-based audit toolkit for this setting. A
 `DomainContract` encodes the measurements that matter in a domain, and `AuditSuite` turns those
 measurements into findings, metrics, and reports.
+
+## Research Questions
+
+**RQ1: Do conventional prediction metrics miss mechanism mismatch?**
+
+Synthetic cases let us compare position error against semantic, causal, physical, cross-layer,
+and decision-risk findings.
+
+**RQ2: Can audit scores recover injected failure categories?**
+
+MechanismLens records injected labels and detected categories so simple confusion summaries can
+measure whether the toolkit detects the intended failure type.
+
+**RQ3: Do cross-layer findings predict downstream decision risk?**
+
+The experiment labels downstream failures and computes severity-weighted risk scores, enabling
+small-scale checks of whether mechanism findings align with downstream outcomes.
+
+**RQ4: When does MSE disagree with mechanism risk?**
+
+Records include mean position error and audit risk, making disagreement cases explicit rather
+than hidden inside a single aggregate score.

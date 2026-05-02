@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mechanismlens"
-version = "0.7.0"
+version = "0.8.0"
 description = "Cross-layer diagnostics for semantic-causal-physical world model rollouts."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,6 +14,9 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=7.4"]
+
+[project.scripts]
+mechanismlens = "mechanismlens.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -9,6 +9,7 @@ Run:
 
 ```bash
 python -m mechanismlens.examples.toy_rollout_demo
+mechanismlens demo rollout
 ```
 
 The demo builds a ground-truth two-object rollout and a predicted rollout with penetration,
@@ -36,6 +37,7 @@ Run:
 
 ```bash
 python -m mechanismlens.examples.toy_counterfactual_demo
+mechanismlens demo counterfactual
 ```
 
 The demo compares a base predicted rollout with an intervened predicted rollout. Object `A` is
@@ -62,6 +64,7 @@ Run:
 
 ```bash
 python -m mechanismlens.examples.toy_decision_risk_demo
+mechanismlens demo decision
 ```
 
 The demo builds a predicted trajectory where a toy planner imagines high reward while colliding
@@ -87,6 +90,7 @@ Run:
 
 ```bash
 python -m mechanismlens.examples.run_toy_benchmark
+mechanismlens benchmark toy
 ```
 
 The benchmark suite runs multiple deterministic toy cases:

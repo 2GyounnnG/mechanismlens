@@ -9,6 +9,7 @@ python -m pip install -e ".[dev]"
 ```
 
 If your shell does not expose `python`, use the interpreter from your virtual environment.
+For CLI-only local use, run `python -m pip install -e .`.
 
 ## Running Tests
 
@@ -21,9 +22,20 @@ pytest
 ```bash
 python -m mechanismlens.examples.toy_rollout_demo
 python -m mechanismlens.examples.toy_counterfactual_demo
+python -m mechanismlens.examples.toy_decision_risk_demo
+python -m mechanismlens.examples.run_toy_benchmark
 ```
 
 Reports are written under `examples/reports/`.
+
+After an editable install, the same flows are available through the CLI:
+
+```bash
+mechanismlens demo rollout
+mechanismlens demo counterfactual
+mechanismlens demo decision
+mechanismlens benchmark toy
+```
 
 ## Branch Workflow
 

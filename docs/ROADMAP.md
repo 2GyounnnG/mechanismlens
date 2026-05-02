@@ -16,10 +16,12 @@
   for batch auditing.
 - **v0.7 decision-risk audit**: imagined-real return gaps, uncertainty summaries, and
   reward/violation coupling for toy planner traces.
+- **v0.8 synthetic experiment suite**: controlled mechanism-mismatch case generation,
+  aggregate records, detection summaries, confusion counts, and risk/failure correlations.
 
 ## Next
 
 - Richer contract plugins for non-rigid-body domains.
 - Larger benchmark cases for planner exploitation and long-horizon rollout failures.
-- Paper experiments that compare accuracy-only evaluation with cross-layer diagnostics.
+- Paper experiments comparing accuracy-only evaluation with synthetic cross-layer diagnostics.
 - CLI entry point for batch audits and CI usage.
