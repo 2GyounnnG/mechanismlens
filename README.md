@@ -94,16 +94,20 @@ Run controlled synthetic mechanism-mismatch experiments:
 python -m mechanismlens.experiments.run_synthetic_experiment --n-per-type 20
 ```
 
-The experiment injects clean, physics, cross-layer, causal, decision, and combined failures,
-then writes:
+The experiment injects clean, prediction-error-only, physics, cross-layer, causal, decision,
+low-MSE/high-risk, and combined cases, then writes:
 
 - `experiments/results/synthetic_audit_records.json`
 - `experiments/results/synthetic_audit_records.csv`
 - `experiments/results/synthetic_summary.json`
+- `experiments/results/synthetic_summary.md`
+
+If matplotlib is available, it also saves optional figures under `experiments/figures/`.
 
 These outputs are intended for research analysis: whether audit scores recover injected
-failure categories and whether mechanism risk predicts downstream failure better than simple
-prediction error in the synthetic setting.
+failure categories, whether low prediction error can still hide mechanism risk, and whether
+mechanism risk predicts downstream failure better than simple prediction error in the synthetic
+setting.
 
 ## Example Report Snippet
 
@@ -171,4 +175,6 @@ report.save_json("examples/reports/audit.json")
 - v0.5: documentation and research framing cleanup.
 - v0.6: deterministic toy benchmark suite for batch auditing.
 - v0.7: decision-risk audit for planner traces.
+- v0.8: CLI interface for demos, benchmarks, and version checks.
+- v0.9: synthetic experiment analysis for injected failure recovery and risk/error comparison.
 - Next: richer contract plugins, larger benchmark cases, and paper experiments.

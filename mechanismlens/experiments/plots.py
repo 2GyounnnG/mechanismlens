@@ -5,82 +5,88 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from mechanismlens.experiments.analysis import compute_category_confusion
+from mechanismlens.experiments.analysis import compute_risk_by_failure_type
 
 
-def generate_plots(records: list[dict[str, Any]], output_dir: str | Path) -> list[Path]:
-    """Generate plots when matplotlib is available.
+def plot_risk_by_failure_type(records: list[dict[str, Any]], path: str | Path) -> Path | None:
+    """Save a bar chart of mean risk score by failure type if matplotlib is installed."""
 
-    If matplotlib is missing, this function prints a warning and returns an empty list.
-    """
+    plt = _matplotlib()
+    if plt is None:
+        return None
+    output_path = _prepare_path(path)
+    risk_by_type = compute_risk_by_failure_type(records)
+    labels = list(risk_by_type)
+    values = [risk_by_type[label]["mean"] for label in labels]
+    fig, ax = plt.subplots(figsize=(9, 4))
+    ax.bar(labels, values)
+    ax.set_ylabel("Mean risk score")
+    ax.set_title("Risk score by synthetic failure type")
+    ax.tick_params(axis="x", rotation=30)
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
 
+
+def plot_risk_vs_return_gap(records: list[dict[str, Any]], path: str | Path) -> Path | None:
+    """Save a risk-vs-return-gap scatter plot if matplotlib is installed."""
+
+    plt = _matplotlib()
+    if plt is None:
+        return None
+    output_path = _prepare_path(path)
+    points = [
+        (float(record["risk_score"]), float(record["return_gap"]))
+        for record in records
+        if isinstance(record.get("risk_score"), (int, float))
+        and isinstance(record.get("return_gap"), (int, float))
+    ]
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.scatter([left for left, _right in points], [right for _left, right in points])
+    ax.set_xlabel("Risk score")
+    ax.set_ylabel("Return gap")
+    ax.set_title("Risk vs return gap")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def plot_mse_vs_return_gap(records: list[dict[str, Any]], path: str | Path) -> Path | None:
+    """Save an MSE-vs-return-gap scatter plot if matplotlib is installed."""
+
+    plt = _matplotlib()
+    if plt is None:
+        return None
+    output_path = _prepare_path(path)
+    points = [
+        (float(record["mean_position_error_mean"]), float(record["return_gap"]))
+        for record in records
+        if isinstance(record.get("mean_position_error_mean"), (int, float))
+        and isinstance(record.get("return_gap"), (int, float))
+    ]
+    fig, ax = plt.subplots(figsize=(5, 4))
+    ax.scatter([left for left, _right in points], [right for _left, right in points])
+    ax.set_xlabel("Mean position error")
+    ax.set_ylabel("Return gap")
+    ax.set_title("Prediction error vs return gap")
+    fig.tight_layout()
+    fig.savefig(output_path)
+    plt.close(fig)
+    return output_path
+
+
+def _matplotlib() -> Any | None:
     try:
         import matplotlib.pyplot as plt  # type: ignore[import-not-found]
     except ImportError:
-        print("matplotlib is not installed; skipping experiment plots.")
-        return []
-
-    output_path = Path(output_dir)
-    output_path.mkdir(parents=True, exist_ok=True)
-    written: list[Path] = []
-
-    risk_by_type = _risk_by_failure_type(records)
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.bar(list(risk_by_type), list(risk_by_type.values()))
-    ax.set_ylabel("Mean risk score")
-    ax.set_title("Risk score by injected failure type")
-    ax.tick_params(axis="x", rotation=30)
-    fig.tight_layout()
-    path = output_path / "risk_score_by_failure_type.png"
-    fig.savefig(path)
-    plt.close(fig)
-    written.append(path)
-
-    return_gap_records = [
-        record for record in records if isinstance(record.get("return_gap"), (int, float))
-    ]
-    fig, ax = plt.subplots(figsize=(5, 4))
-    ax.scatter(
-        [record["risk_score"] for record in return_gap_records],
-        [record["return_gap"] for record in return_gap_records],
-    )
-    ax.set_xlabel("Risk score")
-    ax.set_ylabel("Return gap")
-    ax.set_title("Risk score vs return gap")
-    fig.tight_layout()
-    path = output_path / "risk_vs_return_gap.png"
-    fig.savefig(path)
-    plt.close(fig)
-    written.append(path)
-
-    confusion = compute_category_confusion(records)
-    labels = sorted(confusion)
-    matrix = [[confusion[row].get(col, 0) for col in labels] for row in labels]
-    fig, ax = plt.subplots(figsize=(7, 6))
-    image = ax.imshow(matrix)
-    ax.set_xticks(range(len(labels)), labels=labels, rotation=45, ha="right")
-    ax.set_yticks(range(len(labels)), labels=labels)
-    ax.set_xlabel("Detected category")
-    ax.set_ylabel("Injected category")
-    ax.set_title("Category confusion")
-    fig.colorbar(image, ax=ax)
-    fig.tight_layout()
-    path = output_path / "category_confusion_heatmap.png"
-    fig.savefig(path)
-    plt.close(fig)
-    written.append(path)
-
-    return written
+        print("matplotlib is not installed; skipping experiment plot.")
+        return None
+    return plt
 
 
-def _risk_by_failure_type(records: list[dict[str, Any]]) -> dict[str, float]:
-    totals: dict[str, float] = {}
-    counts: dict[str, int] = {}
-    for record in records:
-        labels = record.get("injected_failures", []) or ["clean"]
-        if len(labels) > 1:
-            labels = ["combined"]
-        for label in labels:
-            totals[label] = totals.get(label, 0.0) + float(record.get("risk_score", 0.0))
-            counts[label] = counts.get(label, 0) + 1
-    return {label: totals[label] / counts[label] for label in sorted(totals)}
+def _prepare_path(path: str | Path) -> Path:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    return output_path

@@ -1,137 +1,233 @@
-"""Analysis helpers for synthetic MechanismLens experiments."""
+"""Analysis helpers for controlled synthetic MechanismLens experiments."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from math import sqrt
+from statistics import median
 from typing import Any
 
 from mechanismlens.benchmark import BenchmarkCase, BenchmarkResult
-from mechanismlens.schema import AuditReport, CATEGORY_ORDER
+from mechanismlens.schema import AuditReport, CATEGORY_ORDER, SEVERITY_ORDER
 
-SEVERITY_WEIGHTS = {"low": 1.0, "medium": 2.0, "high": 3.0}
+SEVERITY_WEIGHTS = {"low": 1.0, "medium": 2.0, "high": 4.0}
+RECALL_CATEGORIES = ("physics", "causal", "cross_layer", "decision")
+
+
+def severity_weighted_risk_score_from_counts(severity_counts: Mapping[str, int]) -> float:
+    """Compute a compact weighted risk score from severity counts."""
+
+    return float(
+        sum(
+            SEVERITY_WEIGHTS.get(severity, 0.0) * int(count)
+            for severity, count in severity_counts.items()
+        )
+    )
 
 
 def severity_weighted_risk_score(report_or_result: AuditReport | BenchmarkResult) -> float:
-    """Compute a compact weighted score from severity counts."""
+    """Compute a weighted score from an audit report or benchmark result."""
 
     counts = report_or_result.severity_counts
     if callable(counts):
         counts = counts()
-    return float(sum(SEVERITY_WEIGHTS.get(severity, 0.0) * count for severity, count in counts.items()))
+    return severity_weighted_risk_score_from_counts(counts)
 
 
 def extract_case_record(
     case: BenchmarkCase,
     report: AuditReport,
     result: BenchmarkResult,
-    ground_truth_labels: Mapping[str, Any],
+    labels: Mapping[str, Any],
 ) -> dict[str, Any]:
-    """Build a flat-ish experiment record for JSON/CSV export."""
+    """Build one flat experiment record for JSON/CSV export."""
 
-    injected_failures = list(ground_truth_labels.get("injected_failures", []))
-    detected_categories = sorted(result.category_counts)
+    category_counts = {
+        category: result.category_counts.get(category, 0) for category in CATEGORY_ORDER
+    }
+    severity_counts = {
+        severity: result.severity_counts.get(severity, 0) for severity in SEVERITY_ORDER
+    }
+    mean_position_error = result.metrics.get("mean_position_error", [])
+    if isinstance(mean_position_error, list) and mean_position_error:
+        numeric_errors = [
+            float(value) for value in mean_position_error if isinstance(value, (int, float))
+        ]
+    else:
+        numeric_errors = []
     decision_gap = result.metrics.get("decision_return_gap", {})
-    return_gap = decision_gap.get("return_gap") if isinstance(decision_gap, dict) else None
-    prediction_errors = result.metrics.get("mean_position_error", [])
-    mean_prediction_error = (
-        sum(float(value) for value in prediction_errors) / len(prediction_errors)
-        if isinstance(prediction_errors, list) and prediction_errors
-        else 0.0
-    )
+    return_gap = decision_gap.get("return_gap") if isinstance(decision_gap, Mapping) else None
+
     return {
+        "case_id": labels.get("case_id", case.name),
         "case_name": case.name,
-        "description": case.description,
-        "injected_failures": injected_failures,
-        "detected_categories": detected_categories,
-        "severity": ground_truth_labels.get("severity", "unknown"),
-        "has_downstream_failure": bool(ground_truth_labels.get("has_downstream_failure", False)),
-        "seed": ground_truth_labels.get("seed"),
+        "failure_type": labels.get("failure_type", "unknown"),
+        "injected_failures": list(labels.get("injected_failures", [])),
+        "expected_risk": labels.get("expected_risk", "unknown"),
         "overall_risk": result.overall_risk,
         "finding_count": result.finding_count,
+        "low_count": severity_counts["low"],
+        "medium_count": severity_counts["medium"],
+        "high_count": severity_counts["high"],
+        "semantic_count": category_counts["semantic"],
+        "causal_count": category_counts["causal"],
+        "physics_count": category_counts["physics"],
+        "cross_layer_count": category_counts["cross_layer"],
+        "decision_count": category_counts["decision"],
+        "horizon_count": category_counts["horizon"],
         "risk_score": severity_weighted_risk_score(result),
-        "category_counts": result.category_counts,
-        "severity_counts": result.severity_counts,
-        "metrics": result.metrics,
-        "mean_prediction_error": mean_prediction_error,
-        "return_gap": return_gap,
+        "mean_position_error_final": numeric_errors[-1] if numeric_errors else None,
+        "mean_position_error_mean": (
+            sum(numeric_errors) / len(numeric_errors) if numeric_errors else None
+        ),
+        "return_gap": float(return_gap) if isinstance(return_gap, (int, float)) else None,
+        "has_downstream_failure": bool(labels.get("has_downstream_failure", False)),
+        "expected_low_mse": bool(labels.get("expected_low_mse", False)),
+        "severity": labels.get("severity", "unknown"),
+        "seed": labels.get("seed"),
         "finding_messages": [finding.message for finding in report.findings],
     }
 
 
 def compute_detection_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
-    """Summarize detection rates by injected failure category."""
+    """Summarize case counts and detected categories by failure type."""
 
-    categories = [*CATEGORY_ORDER, "clean", "combined"]
-    by_category: dict[str, dict[str, int | float]] = {
-        category: {"total": 0, "detected": 0, "missed": 0, "detection_rate": 0.0}
-        for category in categories
-    }
+    by_failure_type: dict[str, dict[str, Any]] = {}
+    detected_category_counts = {category: 0 for category in CATEGORY_ORDER}
 
     for record in records:
-        injected = record.get("injected_failures", [])
-        detected = set(record.get("detected_categories", []))
-        labels = ["clean"] if not injected else list(injected)
-        if len(injected) > 1:
-            labels.append("combined")
-        for label in labels:
-            if label not in by_category:
-                by_category[label] = {"total": 0, "detected": 0, "missed": 0, "detection_rate": 0.0}
-            by_category[label]["total"] += 1
-            is_detected = not injected and not detected or label in detected
-            if label == "combined":
-                is_detected = all(item in detected for item in injected)
-            if is_detected:
-                by_category[label]["detected"] += 1
-            else:
-                by_category[label]["missed"] += 1
+        failure_type = str(record.get("failure_type", "unknown"))
+        stats = by_failure_type.setdefault(
+            failure_type,
+            {
+                "total": 0,
+                "detected": 0,
+                "missed": 0,
+                "detected_category_counts": {category: 0 for category in CATEGORY_ORDER},
+            },
+        )
+        stats["total"] += 1
+        detected_any = int(record.get("finding_count", 0)) > 0
+        if detected_any:
+            stats["detected"] += 1
+        else:
+            stats["missed"] += 1
 
-    for stats in by_category.values():
+        for category in CATEGORY_ORDER:
+            count = int(record.get(f"{category}_count", 0))
+            if count > 0:
+                detected_category_counts[category] += 1
+                stats["detected_category_counts"][category] += 1
+
+    for stats in by_failure_type.values():
         total = int(stats["total"])
         stats["detection_rate"] = 0.0 if total == 0 else int(stats["detected"]) / total
 
     return {
         "num_cases": len(records),
-        "by_injected_failure": by_category,
+        "by_failure_type": by_failure_type,
+        "detected_category_counts": detected_category_counts,
     }
 
 
-def compute_category_confusion(records: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
-    """Count injected category vs detected category pairs."""
+def compute_category_recall(records: list[dict[str, Any]]) -> dict[str, dict[str, float | int]]:
+    """Estimate recall for injected mechanism categories."""
 
-    labels = [*CATEGORY_ORDER, "clean"]
-    confusion = {label: {category: 0 for category in labels} for label in labels}
+    recall: dict[str, dict[str, float | int]] = {}
+    for category in RECALL_CATEGORIES:
+        total = 0
+        detected = 0
+        for record in records:
+            injected = set(record.get("injected_failures", []))
+            if category not in injected:
+                continue
+            total += 1
+            detected += int(int(record.get(f"{category}_count", 0)) > 0)
+        recall[category] = {
+            "total": total,
+            "detected": detected,
+            "recall": 0.0 if total == 0 else detected / total,
+        }
+    return recall
+
+
+def compute_risk_by_failure_type(
+    records: list[dict[str, Any]],
+) -> dict[str, dict[str, float | int]]:
+    """Compute mean and median risk score by synthetic failure type."""
+
+    grouped: dict[str, list[float]] = {}
     for record in records:
-        injected = record.get("injected_failures", []) or ["clean"]
-        detected = record.get("detected_categories", []) or ["clean"]
-        for injected_label in injected:
-            confusion.setdefault(injected_label, {category: 0 for category in labels})
-            for detected_label in detected:
-                if detected_label not in confusion[injected_label]:
-                    confusion[injected_label][detected_label] = 0
-                confusion[injected_label][detected_label] += 1
-    return confusion
+        grouped.setdefault(str(record.get("failure_type", "unknown")), []).append(
+            float(record.get("risk_score", 0.0))
+        )
+    return {
+        failure_type: {
+            "count": len(values),
+            "mean": sum(values) / len(values),
+            "median": float(median(values)),
+        }
+        for failure_type, values in sorted(grouped.items())
+        if values
+    }
 
 
-def compute_risk_failure_correlation(records: list[dict[str, Any]]) -> dict[str, float | None]:
-    """Compute simple Pearson correlations with risk score."""
+def compute_metric_correlations(records: list[dict[str, Any]]) -> dict[str, float | None]:
+    """Compute simple Pearson correlations without requiring pandas."""
 
-    risk_scores = [float(record.get("risk_score", 0.0)) for record in records]
-    downstream = [1.0 if record.get("has_downstream_failure", False) else 0.0 for record in records]
-    return_gaps = [
-        float(record["return_gap"])
-        for record in records
-        if isinstance(record.get("return_gap"), (int, float))
-    ]
-    return_gap_risks = [
-        float(record.get("risk_score", 0.0))
-        for record in records
-        if isinstance(record.get("return_gap"), (int, float))
+    return {
+        "risk_score_vs_has_downstream_failure": _correlate_present(
+            records, "risk_score", "has_downstream_failure"
+        ),
+        "risk_score_vs_return_gap": _correlate_present(records, "risk_score", "return_gap"),
+        "mean_position_error_mean_vs_return_gap": _correlate_present(
+            records, "mean_position_error_mean", "return_gap"
+        ),
+        "mean_position_error_mean_vs_has_downstream_failure": _correlate_present(
+            records, "mean_position_error_mean", "has_downstream_failure"
+        ),
+    }
+
+
+def summarize_low_mse_high_risk(records: list[dict[str, Any]]) -> dict[str, int]:
+    """Count expected low-MSE cases that still receive a high mechanism-risk score."""
+
+    low_mse_records = [record for record in records if bool(record.get("expected_low_mse", False))]
+    high_risk_records = [
+        record
+        for record in low_mse_records
+        if float(record.get("risk_score", 0.0)) >= SEVERITY_WEIGHTS["high"]
+        or record.get("overall_risk") == "high"
     ]
     return {
-        "risk_downstream_failure_correlation": _pearson(risk_scores, downstream),
-        "risk_return_gap_correlation": _pearson(return_gap_risks, return_gaps),
+        "expected_low_mse_count": len(low_mse_records),
+        "low_mse_high_risk_count": len(high_risk_records),
     }
+
+
+def _correlate_present(
+    records: list[dict[str, Any]],
+    left_key: str,
+    right_key: str,
+) -> float | None:
+    left: list[float] = []
+    right: list[float] = []
+    for record in records:
+        left_value = _numeric_value(record.get(left_key))
+        right_value = _numeric_value(record.get(right_key))
+        if left_value is None or right_value is None:
+            continue
+        left.append(left_value)
+        right.append(right_value)
+    return _pearson(left, right)
+
+
+def _numeric_value(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    return None
 
 
 def _pearson(left: list[float], right: list[float]) -> float | None:

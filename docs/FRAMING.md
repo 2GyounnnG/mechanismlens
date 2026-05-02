@@ -40,7 +40,7 @@ and decision-risk findings.
 MechanismLens records injected labels and detected categories so simple confusion summaries can
 measure whether the toolkit detects the intended failure type.
 
-**RQ3: Do cross-layer findings predict downstream decision risk?**
+**RQ3: Do cross-layer/decision findings predict downstream decision risk?**
 
 The experiment labels downstream failures and computes severity-weighted risk scores, enabling
 small-scale checks of whether mechanism findings align with downstream outcomes.
