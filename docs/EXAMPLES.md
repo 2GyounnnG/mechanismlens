@@ -56,6 +56,31 @@ Outputs:
 - `examples/reports/toy_counterfactual_audit.md`
 - `examples/reports/toy_counterfactual_audit.json`
 
+## Toy Decision-Risk Audit
+
+Run:
+
+```bash
+python -m mechanismlens.examples.toy_decision_risk_demo
+```
+
+The demo builds a predicted trajectory where a toy planner imagines high reward while colliding
+with a static obstacle and traversing high-uncertainty states.
+
+Report snippet:
+
+```markdown
+### decision
+
+- **high**: Planner imagined return exceeds realized return by 3.200.
+- **medium**: High predicted reward coincides with physics/causal/cross-layer violation timesteps.
+```
+
+Outputs:
+
+- `examples/reports/toy_decision_risk_audit.md`
+- `examples/reports/toy_decision_risk_audit.json`
+
 ## Toy Benchmark Suite
 
 Run:
@@ -71,6 +96,7 @@ The benchmark suite runs multiple deterministic toy cases:
 - `static_object_mismatch`
 - `counterfactual_side_effect`
 - `combined_failure`
+- `planner_exploit_failure`
 
 It prints a compact table and writes aggregate outputs:
 

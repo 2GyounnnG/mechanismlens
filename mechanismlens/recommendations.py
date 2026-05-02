@@ -23,6 +23,16 @@ def generate_recommendations(report: AuditReport) -> list[str]:
         recommendations.append(
             "Inspect semantic labels and check whether the active domain contract matches the modeled world."
         )
+    if any(finding.category == "decision" for finding in findings):
+        recommendations.append(
+            "Compare imagined vs realized returns before trusting planner-selected rollouts."
+        )
+        recommendations.append(
+            "Add an uncertainty penalty or trust-region planning constraint for risky imagined paths."
+        )
+        recommendations.append(
+            "Avoid using long rollout reward as the sole planner objective."
+        )
 
     amplification = report.metrics.get("horizon_amplification")
     if isinstance(amplification, dict):

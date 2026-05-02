@@ -47,6 +47,12 @@ Run the counterfactual audit demo:
 python -m mechanismlens.examples.toy_counterfactual_demo
 ```
 
+Run the decision-risk audit demo:
+
+```bash
+python -m mechanismlens.examples.toy_decision_risk_demo
+```
+
 The demos print Markdown reports and save Markdown/JSON files under `examples/reports/`.
 
 ## Benchmark Mode
@@ -115,7 +121,7 @@ report.save_json("examples/reports/audit.json")
 
 - The included checks are intentionally small and rule-based.
 - The rigid-body contract is a toy reference contract, not a full physics engine.
-- Decision/planner risk is represented in the taxonomy but not yet deeply implemented.
+- Decision/planner risk checks are toy-level heuristics, not a full planning safety analysis.
 - Counterfactual support currently uses object-level position deviation and locality heuristics.
 - Reports explain detected contract violations; they do not establish model correctness.
 
@@ -127,4 +133,5 @@ report.save_json("examples/reports/audit.json")
 - v0.4: polished Markdown/JSON reports and recommendations.
 - v0.5: documentation and research framing cleanup.
 - v0.6: deterministic toy benchmark suite for batch auditing.
-- Next: richer contract plugins, decision-risk audit, larger benchmark cases, and paper experiments.
+- v0.7: decision-risk audit for planner traces.
+- Next: richer contract plugins, larger benchmark cases, and paper experiments.

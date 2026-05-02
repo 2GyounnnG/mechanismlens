@@ -136,6 +136,11 @@ class AuditInput:
     predicted_intervened: Trajectory | None = None
     expected_affected_object_ids: list[str] | None = None
     intervention_description: str | None = None
+    planned_actions: list[dict[str, Any]] | None = None
+    predicted_rewards: list[float] | None = None
+    realized_rewards: list[float] | None = None
+    uncertainty: list[float] | None = None
+    planner_metadata: dict[str, Any] | None = None
 
     def to_json_dict(self) -> dict[str, Any]:
         return {
@@ -154,6 +159,11 @@ class AuditInput:
             else self.predicted_intervened.to_json_dict(),
             "expected_affected_object_ids": self.expected_affected_object_ids,
             "intervention_description": self.intervention_description,
+            "planned_actions": self.planned_actions,
+            "predicted_rewards": self.predicted_rewards,
+            "realized_rewards": self.realized_rewards,
+            "uncertainty": self.uncertainty,
+            "planner_metadata": self.planner_metadata,
         }
 
 

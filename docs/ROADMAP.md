@@ -14,10 +14,12 @@
   development guide, and clearer project roadmap.
 - **v0.6 benchmark suite**: deterministic toy benchmark cases plus aggregate JSON/CSV outputs
   for batch auditing.
+- **v0.7 decision-risk audit**: imagined-real return gaps, uncertainty summaries, and
+  reward/violation coupling for toy planner traces.
 
 ## Next
 
 - Richer contract plugins for non-rigid-body domains.
-- Decision-risk audit for planner traces.
+- Larger benchmark cases for planner exploitation and long-horizon rollout failures.
 - Paper experiments that compare accuracy-only evaluation with cross-layer diagnostics.
 - CLI entry point for batch audits and CI usage.

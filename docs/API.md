@@ -1,6 +1,6 @@
 # API Overview
 
-This page documents the small public API used by the v0.5 examples.
+This page documents the small public API used by the v0.7 examples.
 
 ## ObjectState
 
@@ -51,6 +51,19 @@ audit_input = AuditInput(
 )
 ```
 
+For decision-risk audits:
+
+```python
+audit_input = AuditInput(
+    predicted=trajectory,
+    planned_actions=[{"action": "move_right"}],
+    predicted_rewards=[1.0],
+    realized_rewards=[0.2],
+    uncertainty=[0.7],
+    planner_metadata={"planner": "toy_greedy"},
+)
+```
+
 ## Finding
 
 `Finding` is a structured diagnostic result with severity, category, message, optional time
@@ -80,7 +93,8 @@ report.save_json("examples/reports/audit.json")
 
 ## AuditSuite
 
-`AuditSuite` runs horizon metrics, domain-contract checks, and counterfactual checks.
+`AuditSuite` runs horizon metrics, domain-contract checks, counterfactual checks, and optional
+decision-risk checks.
 
 ```python
 from mechanismlens import AuditSuite

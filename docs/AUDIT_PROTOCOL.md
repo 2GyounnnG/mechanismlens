@@ -63,3 +63,19 @@ Use:
 report.save_markdown("examples/reports/audit.md")
 report.save_json("examples/reports/audit.json")
 ```
+
+## v0.7 Decision-Risk Audit
+
+When `AuditInput` includes `predicted_rewards`, `realized_rewards`, or `uncertainty`,
+MechanismLens runs decision-risk checks after trajectory and counterfactual findings are known.
+
+The audit computes:
+
+- `decision_return_gap`: imagined return, realized return, and their difference.
+- `decision_uncertainty`: mean and max uncertainty on the planned path.
+- `decision_violation_reward_coupling`: predicted reward on violation timesteps compared with
+  non-violation timesteps.
+
+Violation timesteps are inferred from existing physics, causal, and cross-layer findings with a
+time index. Decision findings flag large imagined-real return gaps, high uncertainty, and cases
+where high predicted reward coincides with invalid rollout states.

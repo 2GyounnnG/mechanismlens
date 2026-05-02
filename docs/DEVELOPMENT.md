@@ -30,7 +30,7 @@ Reports are written under `examples/reports/`.
 Use feature branches for versioned changes, for example:
 
 ```bash
-git checkout -b v0.6-decision-risk
+git checkout -b v0.8-my-feature
 ```
 
 Keep changes scoped, run tests before review, and avoid committing generated report outputs
